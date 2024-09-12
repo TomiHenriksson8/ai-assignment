@@ -1,21 +1,54 @@
 import {Request, Response, NextFunction} from 'express';
+import fetchData from '../../lib/fetchData';
+import CustomError from '../../classes/CustomError';
 
 const commentPost = async (
-  req: Request<{}, {}, {text: string}>,
-  res: Response<{response: string}>,
+  req: Request<{}, {}, { text: string }>,
+  res: Response<{ response: string }>,
   next: NextFunction
 ) => {
   try {
-    try {
-      // TODO: Generate a sarcastic, hostile AI response to a Youtube comment, imitating an 18th-century English aristocrat, and return it as a JSON response.
-      // Use the text from the request body to generate the response.
-      // Instead of using openai library, use fetchData to make a post request to the server.
-      // see https://platform.openai.com/docs/api-reference/chat/create for more information
-      // You don't need an API key if you use the URL provided in .env.sample and Metropolia VPN
-      // Example: instad of https://api.openai.com/v1/chat/completions use process.env.OPENAI_API_URL + '/v1/chat/completions'
-    } catch (error) {
-    next(error);
+    const { text } = req.body;
+
+    // Validate input
+    if (!text || text.trim() === "") {
+      return res.status(400).json({ response: "Comment text cannot be empty." });
+    }
+
+    // Prepare the payload for OpenAI API request
+    const data = {
+      model: "gpt-3.5-turbo",
+      messages: [
+        { role: "system", content: "You are a sarcastic, hostile 18th-century English aristocrat responding to YouTube comments." },
+        { role: "user", content: text }
+      ],
+      temperature: 0.7
+    };
+
+    // Define request options
+    const options: RequestInit = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
+    };
+
+    // Send request using fetchData
+    const aiResponse = await fetchData<{ choices: { message: { content: string } }[] }>(
+      process.env.OPENAI_API_URL + '/v1/chat/completions',
+      options
+    );
+
+    // Extract the response content
+    const responseText = aiResponse.choices[0].message.content;
+
+    // Send the response as JSON
+    return res.status(200).json({ response: responseText });
+
+  } catch (error) {
+    next(new CustomError((error as Error).message, 500));
   }
 };
 
-export {commentPost};
+export { commentPost };
