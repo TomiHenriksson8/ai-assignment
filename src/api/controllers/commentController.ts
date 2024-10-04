@@ -19,8 +19,7 @@ const commentPost = async (
     const data = {
       model: "gpt-3.5-turbo",
       messages: [
-        { role: "system", content: "You are a sarcastic, hostile 18th-century English aristocrat responding to YouTube comments." },
-        { role: "user", content: text }
+        { role: "system", content: "You are a helpful and optimistic AI assistant, always offering positive and thoughtful replies to YouTube comments." },        { role: "user", content: text }
       ],
       temperature: 0.7
     };
